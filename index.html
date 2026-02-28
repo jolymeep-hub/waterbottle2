@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Model Viewer</title>
+
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; }
+    model-viewer { width:100vw; height:100vh; background:#fff; }
+
+    .bar{
+      position:fixed; top:10px; left:10px; z-index:9999;
+      background:#fff; border:1px solid #ccc; padding:10px;
+    }
+    button{ margin:3px; padding:6px 10px; cursor:pointer; }
+
+    /* ===== HOTSPOTS ===== */
+    .Hotspot{
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      background:#000;
+      border:2px solid #fff;
+      cursor:pointer;
+      transition: transform 0.15s ease;
+      padding:0;
+    }
+    .Hotspot:hover{ transform: scale(1.15); }
+
+    .HotspotAnnotation{
+      display:none;
+      background:#111;
+      color:#fff;
+      padding:6px 10px;
+      border-radius:4px;
+      font-size:14px;
+      white-space:nowrap;
+      transform: translate(18px, -10px);
+    }
+    .Hotspot:hover .HotspotAnnotation{ display:block; }
+  </style>
+</head>
+
+<body>
+
+  <div class="bar">
+    <div>
+      <b>Animation:</b>
+      <button id="animBody">Animation 1</button>
+      <button id="animLight">Animation 2</button>
+      <button id="pause">Pause</button>
+    </div>
+
+    <div>
+      <b>Variant:</b>
+      <button id="v1">01</button>
+      <button id="v2">02</button>
+      <button id="v3">03</button>
+    </div>
+
+    <div>
+      <b>View:</b>
+      <button id="view1">View 1</button>
+      <button id="view2">View 2</button>
+      <button id="view3">View 3</button>
+    </div>
+  </div>
+
+  <model-viewer
+    id="mv"
+    src="workglb.glb"
+    camera-controls
+    auto-rotate
+    auto-rotate-delay="0"
+    tone-mapping="neutral"
+    shadow-intensity="1"
+    field-of-view="30deg">
+
+    <!-- Hotspots -->
+    <button class="Hotspot" slot="hotspot-1"
+      data-surface="2 0 3193 3972 3974 0.049 0.404 0.547"
+      data-view="1">
+      <div class="HotspotAnnotation">Bottle</div>
+    </button>
+
+    <button class="Hotspot" slot="hotspot-2"
+      data-surface="0 0 2127 2128 2129 0.190 0.392 0.418"
+      data-view="2">
+      <div class="HotspotAnnotation">Cap</div>
+    </button>
+
+    <button class="Hotspot" slot="hotspot-3"
+      data-surface="2 0 12759 13538 13540 0.518 0.132 0.350"
+      data-view="3">
+      <div class="HotspotAnnotation">Grip</div>
+    </button>
+
+  </model-viewer>
+
+  <script>
+    const mv = document.getElementById("mv");
+
+    // your 3 camera views
+    const VIEWS = {
+      1: "-425.2deg 69.2deg 2.083m",
+      2: "-478.61deg 11.60deg 1m",
+      3: "-435.10deg 132.98deg 1m"
+    };
+
+    // your 2 real animation names
+    const ANIM_BODY  = "CubeAction";
+    const ANIM_LIGHT = "Layer 01(3BB24611-2FC2-4228-9BCA-C62DF89F84A0)Action.002";
+
+    function goView(n){
+      mv.cameraOrbit = VIEWS[n];
+      if (typeof mv.jumpCameraToGoal === "function") mv.jumpCameraToGoal();
+    }
+
+    mv.addEventListener("load", () => {
+      // prevent animation autoplay
+      mv.autoplay = false;
+      mv.pause();
+      mv.animationName = null;
+
+      // start on view 1
+      goView(1);
+
+      // variants by index
+      const vars = mv.availableVariants || [];
+      document.getElementById("v1").onclick = () => { if (vars[0]) mv.variantName = vars[0]; };
+      document.getElementById("v2").onclick = () => { if (vars[1]) mv.variantName = vars[1]; };
+      document.getElementById("v3").onclick = () => { if (vars[2]) mv.variantName = vars[2]; };
+    });
+
+    // animation buttons
+    document.getElementById("animBody").onclick = () => { mv.animationName = ANIM_BODY; mv.play(); };
+    document.getElementById("animLight").onclick = () => { mv.animationName = ANIM_LIGHT; mv.play(); };
+    document.getElementById("pause").onclick = () => mv.pause();
+
+    // view buttons
+    document.getElementById("view1").onclick = () => goView(1);
+    document.getElementById("view2").onclick = () => goView(2);
+    document.getElementById("view3").onclick = () => goView(3);
+
+    // clicking hotspots jumps view too
+    document.querySelectorAll(".Hotspot").forEach(hs => {
+      hs.addEventListener("click", () => {
+        const v = hs.dataset.view;
+        if (v) goView(Number(v));
+      });
+    });
+  </script>
+
+</body>
+</html>
